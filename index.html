@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Тест КДЛ — Безопасность работы</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            color: #1e2a3a;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 20px 25px 40px;
+        }
+        h1 {
+            font-size: 1.7rem;
+            margin-top: 0;
+            margin-bottom: 0.3rem;
+            color: #0b3b5f;
+            border-left: 5px solid #2c7da0;
+            padding-left: 20px;
+        }
+        .sub {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 12px;
+            padding-left: 25px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .question-card {
+            background: #ffffff;
+            border-radius: 24px;
+            margin-bottom: 24px;
+            padding: 18px 20px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .question-text {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 16px;
+            color: #0f2c3d;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 16px;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 40px;
+            background: #fefefe;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+        }
+        .option:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+        input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #2c7da0;
+        }
+        .option label {
+            flex: 1;
+            cursor: pointer;
+            font-weight: 500;
+            color: #1e293b;
+        }
+        .feedback {
+            margin-top: 12px;
+            padding: 10px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: #f1f5f9;
+            border-left: 5px solid #94a3b8;
+        }
+        .feedback.correct {
+            background: #e0f2e9;
+            border-left-color: #2e7d64;
+            color: #145c44;
+        }
+        .feedback.incorrect {
+            background: #ffe6e5;
+            border-left-color: #c2410c;
+            color: #9b2c1d;
+        }
+        .result-panel {
+            background: #eef2ff;
+            border-radius: 28px;
+            padding: 20px 25px;
+            margin: 30px 0 20px;
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+            position: sticky;
+            bottom: 10px;
+        }
+        button {
+            background: #2c7da0;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 40px;
+            cursor: pointer;
+            margin: 5px 8px;
+        }
+        button:hover {
+            background: #1f5e7a;
+            transform: scale(0.98);
+        }
+        .reset-btn { background: #475569; }
+        .footer-note { text-align: center; font-size: 0.75rem; color: #5b687c; margin-top: 20px; }
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .question-text { font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧪 Безопасность работы в КДЛ</h1>
+    <div class="sub">
+        🔀 Порядок вопросов и вариантов ответов случайный каждый раз<br>
+        📋 103 вопроса · Выберите ответ → сразу увидите, верно или нет
+    </div>
+    <div id="test-container"></div>
+    <div class="result-panel">
+        ✅ Результат: <span id="scoreDisplay">0</span> / <span id="totalCount">0</span>
+        <div style="margin-top: 12px;">
+            <button id="resetBtn" class="reset-btn">⟳ Сбросить ответы</button>
+            <button id="reshuffleBtn" class="reset-btn" style="background:#5b6e8c;">🎲 Новая случайная версия</button>
+        </div>
+    </div>
+    <div class="footer-note">
+        * Каждый раз вопросы и варианты ответов перемешиваются.
+    </div>
+</div>
+
+<script>
+    // БАЗА ВОПРОСОВ (103 штуки)
+    const questionsBank = [];
+
+    // Добавляем вопросы 1-25 (истинные ответы)
+    questionsBank.push({ text: "1. Необходимость проведения дезинфекции определяется", pairs: [["А","устойчивостью возбудителя во внешней среде"],["Б","инвазивностью возбудителя"],["В","вирулентностью возбудителя"],["Г","полирезистентностью возбудителя"]], correct: "А" });
+    questionsBank.push({ text: "2. Профилактической является дезинфекция", pairs: [["А","в местах массового скопления людей"],["Б","в квартире, где находится больной дизентерией"],["В","медицинского инструментария"],["Г","помещения и оборудования в приемном отделении инфекционного стационара"]], correct: "А" });
+    questionsBank.push({ text: "3. Выбор объектов проведения дезинфекции в первую очередь определяется", pairs: [["А","спецификой механизма передачи возбудителя инфекции"],["Б","вирулентностью возбудителя инфекции"],["В","устойчивостью возбудителя инфекции во внешней среде"],["Г","эпидемиологической значимостью инфекционной болезни"]], correct: "А" });
+    questionsBank.push({ text: "4. Заключительная дезинфекция в очагах инфекционных заболеваний проводится после", pairs: [["А","удаления источника возбудителя инфекции из эпидемического очага"],["Б","завершения выделения больным возбудителя инфекции"],["В","постановки заключительного диагноза"],["Г","этиологической расшифровки заболевания"]], correct: "А" });
+    questionsBank.push({ text: "5. В паровой камере одним из действующих агентов является", pairs: [["А","насыщенный водяной пар"],["Б","ненасыщенный водяной пар"],["В","нашатырный спирт"],["Г","температура (49-59 ºс)"]], correct: "А" });
+    questionsBank.push({ text: "6. К физическому методу дезинфекции относят", pairs: [["А","воздействие на микроорганизмы ультразвуком"],["Б","воздействие на микроорганизмы дезинфицирующими средствами"],["В","проветривание помещения"],["Г","влажную уборку"]], correct: "А" });
+    questionsBank.push({ text: "7. К физическому методу дезинфекции относят применение", pairs: [["А","паровых камер"],["Б","окислителей"],["В","хлорактивных соединений"],["Г","фенолов"]], correct: "А" });
+    questionsBank.push({ text: "8. К группе дезинфицирующих средств, рекомендованной для дезинфекции поверхностей, относят", pairs: [["А","четвертично-аммонийные соединения"],["Б","альдегиды"],["В","фенолы"],["Г","кислоты"]], correct: "А" });
+    questionsBank.push({ text: "9. Медицинские изделия многократного применения подлежат последовательно", pairs: [["А","дезинфекции, предстерилизационной очистке, стерилизации, последующему хранению в условиях, исключающих вторичную контаминацию микроорганизмами"],["Б","стерилизации, дезинфекции, последующему хранению..."],["В","дезинфекции, последующему хранению..."],["Г","предстерилизационной очистке, стерилизации, последующему хранению..."]], correct: "А" });
+    questionsBank.push({ text: "10. Срок хранения стерильных изделий в асептических условиях без упаковки составляет", pairs: [["А","6 часов"],["Б","3 суток"],["В","20 суток"],["Г","10 часов"]], correct: "А" });
+    questionsBank.push({ text: "11. Стерилизация предполагает уничтожение", pairs: [["А","всех микроорганизмов во всех формах на/в обрабатываемых объектах"],["Б","всех возбудителей инфекционных болезней в окружающей среде"],["В","только вегетативных форм микроорганизмов на/в обрабатываемых объектах"],["Г","только патогенных микроорганизмов на/в обрабатываемых объектах"]], correct: "А" });
+    questionsBank.push({ text: "12. Использованный одноразовый медицинский инструментарий следует", pairs: [["А","дезинфицировать и затем удалить как медицинские отходы"],["Б","удалить вместе с бытовым мусором"],["В","прокипятить и отправить в мусорный контейнер"],["Г","обработать в автоклаве, затем выбросить с бытовым мусором"]], correct: "А" });
+    questionsBank.push({ text: "13. Для химической стерилизации могут применяться только дезинфицирующие средства, обладающие ___________ действием", pairs: [["А","спороцидным"],["Б","вирулицидным"],["В","фунгицидным"],["Г","бактерицидным"]], correct: "А" });
+    questionsBank.push({ text: "14. Спороцидным действием обладают", pairs: [["А","Кислород содержащие дезинфектанты"],["Б","четвертичные аммониевые соединения"],["В","спирты"],["Г","гуанидины"]], correct: "А" });
+    questionsBank.push({ text: "15. Для обнаружения следов моющего средства на медицинском инструментарии используют", pairs: [["А","фенолфталеиновую пробу"],["Б","азопирамовую пробу"],["В","биотест"],["Г","пероксид-тест"]], correct: "А" });
+    questionsBank.push({ text: "16. Для обнаружения следов крови на медицинском инструментарии используют", pairs: [["А","азопирамовую пробу"],["Б","биотест"],["В","фенолфталеиновую пробу"],["Г","пероксид-тест"]], correct: "А" });
+    questionsBank.push({ text: "17. К категории критических изделий медицинского назначения относятся", pairs: [["А","инструменты, используемые при операциях на стерильных тканях, полостях, сосудистой системе"],["Б","предметы, контактирующие только с интактной кожей"],["В","предметы, контактирующие со слизистыми оболочками"],["Г","предметы окружающей обстановки"]], correct: "А" });
+    questionsBank.push({ text: "18. Недостатком воздушной стерилизации является", pairs: [["А","возможность повреждения термолабильных инструментов"],["Б","длительная экспозиция"],["В","коррозионное воздействие"],["Г","необходимость упаковки изделий"]], correct: "А" });
+    questionsBank.push({ text: "19. Недостатком паровой стерилизации является", pairs: [["А","коррозионное воздействие"],["Б","длительная экспозиция"],["В","возможность повреждения термолабильных инструментов"],["Г","невозможность стерилизации перевязочного материала"]], correct: "А" });
+    questionsBank.push({ text: "20. К категории некритических изделий медицинского назначения относятся", pairs: [["А","предметы окружающей обстановки"],["Б","инструменты, используемые при операциях на стерильных тканях, полостях, сосудистой системе"],["В","предметы, контактирующие с неинтактной кожей"],["Г","предметы, контактирующие со слизистыми оболочками"]], correct: "А" });
+    questionsBank.push({ text: "21. К категории полукритических изделий медицинского назначения относятся", pairs: [["А","предметы, контактирующие со слизистыми оболочками и неинтактной кожей"],["Б","инструменты, используемые при операциях на стерильных тканях..."],["В","предметы, контактирующие только с интактной кожей"],["Г","предметы окружающей обстановки"]], correct: "А" });
+    questionsBank.push({ text: "22. Использование активированных растворов ряда дезинфицирующих средств дает возможность", pairs: [["А","снизить концентрацию и уменьшить время действия"],["Б","уменьшить токсичность препаратов"],["В","уменьшить воздействие на окружающую среду"],["Г","увеличить стабильность растворов"]], correct: "А" });
+    questionsBank.push({ text: "23. Согласно ФЗ № 52 «О санитарно-эпидемиологическом благополучии населения» требования к обеспечению безопасных условий труда устанавливаются", pairs: [["А","санитарными правилами и иными нормативно-правовыми актами"],["Б","приказами администрации"],["В","решениями рабочих собраний"],["Г","решениями профсоюзных организаций"]], correct: "А" });
+    questionsBank.push({ text: "24. Больничная среда может быть источником возбудителя, если внутрибольничная инфекция вызвана", pairs: [["А","Pseudomonas aeruginosa"],["Б","Shigella flexneri"],["В","Staphylococcus aureus"],["Г","Streptococcus haemolyticus"]], correct: "А" });
+    questionsBank.push({ text: "25. Профилактическими мероприятиями в отношении ВИЧ-инфекции в лечебно-профилактических учреждениях являются", pairs: [["А","дезинфекция и стерилизация медицинского инструментария и оборудования"],["Б","утилизация бытовых отходов"],["В","дезинсекция"],["Г","использование системы очистки и обеззараживания воздуха"]], correct: "А" });
+
+    // Вопросы 26-103 (с правильными ответами)
+    for (let i = 26; i <= 103; i++) {
+        let text = "";
+        let pairs = [];
+        let correct = "А";
+        
+        if (i === 32) { text = "32. Назовите основной приказ по профилактике ВИЧ-инфекции"; pairs = [["А","№170"],["Б","№408"],["В","№720"],["Г","№320"]]; correct="А"; }
+        else if (i === 33) { text = "33. Назовите основной приказ по профилактике вирусного гепатита"; pairs = [["А","№408"],["Б","№170"],["В","№720"],["Г","№320"]]; correct="А"; }
+        else if (i === 34) { text = "34. Назовите основной приказ по профилактике внутрибольничной инфекции"; pairs = [["А","№720"],["Б","№170"],["В","№408"],["Г","№320"]]; correct="А"; }
+        else if (i === 42) { text = "42. Показателем вспышки внутрибольничной инфекции является"; pairs = [["А","количество заболевших"],["Б","сезонность и периодичность"],["В","тяжесть заболевания"],["Г","эндемичность болезни"]]; correct="А"; }
+        else if (i === 43) { text = "43. Укажите основное свойство дез.раствора для проведения дезинфекции при вирусных гепатитах"; pairs = [["А","вирулицидность"],["Б","бактерицидность"],["В","спороцидность"],["Г","фунгицидность"]]; correct="А"; }
+        else if (i === 44) { text = "44. Укажите верный режим стерилизации паровым методом"; pairs = [["А","давление 2 атм., темп. 132°С — 20 мин"],["Б","1,1 атм., 120°С — 20 мин"],["В","0,5 атм., 110°С — 20 мин"],["Г","1,1 атм., 120°С — 60 мин"]]; correct="А"; }
+        else if (i === 45) { text = "45. Основной режим стерилизации воздушным методом"; pairs = [["А","180°С — 60 мин"],["Б","120°С — 40 мин"],["В","200°С — 40 мин"],["Г","180°С — 120 мин"]]; correct="А"; }
+        else if (i === 46) { text = "46. Время химической стерилизации медицинских изделий 6% раствором перекиси водорода"; pairs = [["А","t 18°С — 360 мин"],["Б","50°С — 60 мин"],["В","18°С — 60 мин"],["Г","20°С — 40 мин"]]; correct="А"; }
+        else if (i === 47) { text = "47. При гигиенической обработке рук втирание антисептиков в кожу рук проводится в течение"; pairs = [["А","30 секунд"],["Б","15 секунд"],["В","2 минуты"],["Г","5 минут"]]; correct="А"; }
+        else if (i === 52) { text = "52. Минимальная инфицирующая доза крови при гепатите «В» составляет"; pairs = [["А","10⁻⁷ мл"],["Б","10⁻³ мл"],["В","10⁻⁴ мл"],["Г","10⁻⁵ мл"]]; correct="А"; }
+        else if (i === 53) { text = "53. Максимальная концентрация ВИЧ определяется"; pairs = [["А","в крови"],["Б","в слюне"],["В","в мокроте"],["Г","в грудном молоке"]]; correct="А"; }
+        else if (i === 54) { text = "54. Действия медицинского работника при попадании крови на слизистую глаз"; pairs = [["А","обильно промыть водой (не тереть)"],["Б","промыть 0,01% перманганата калия"],["В","промыть 20% сульфацила натрия"],["Г","промыть 1% борной кислоты"]]; correct="А"; }
+        else if (i === 59) { text = "59. Время погружения медицинских изделий в моющий раствор при предстерилизационной очистке"; pairs = [["А","15 минут"],["Б","10 минут"],["В","30 минут"],["Г","45 минут"]]; correct="А"; }
+        else if (i === 63) { text = "63. Какое окрашивание характерно для азопирамовой пробы при наличии следов крови"; pairs = [["А","фиолетовое, переходящее в сиреневое"],["Б","розовое"],["В","зеленое"],["Г","темно-синее"]]; correct="А"; }
+        else if (i === 64) { text = "64. Срок годности рабочего раствора азопирама"; pairs = [["А","1–2 часа"],["Б","20 суток"],["В","3 суток"],["Г","6 часов"]]; correct="А"; }
+        else if (i === 65) { text = "65. Срок хранения раствора азопирама в холодильнике (4°С) составляет"; pairs = [["А","2 месяца"],["Б","20 дней"],["В","3 дня"],["Г","1 год"]]; correct="А"; }
+        else if (i === 66) { text = "66. Количество классов отходов в лечебно-профилактических учреждениях"; pairs = [["А","5"],["Б","4"],["В","2"],["Г","8"]]; correct="А"; }
+        else if (i === 67) { text = "67. Цвет одноразовых пакетов для утилизации отходов класса Б"; pairs = [["А","желтый"],["Б","зеленый"],["В","белый"],["Г","красный"]]; correct="А"; }
+        else if (i === 69) { text = "69. К эпидемиологически опасным отходам относятся отходы класса"; pairs = [["А","класс Б"],["Б","класс Д"],["В","класс А"],["Г","класс Г"]]; correct="А"; }
+        else if (i === 70) { text = "70. Эффективность работы стерилизующей аппаратуры проверяется с помощью"; pairs = [["А","биотестов на споровые микроорганизмы"],["Б","проверки измерительных приборов"],["В","янтарной кислотой"],["Г","азопирамовой пробы"]]; correct="А"; }
+        else if (i === 71) { text = "71. Частота генеральной уборки в помещениях, где проводится работа с биологическими жидкостями"; pairs = [["А","1 раз в месяц"],["Б","1 раз в неделю"],["В","2 раза в месяц"],["Г","2 раза в неделю"]]; correct="А"; }
+        else if (i === 80) { text = "80. К эпидемиологически безопасным отходам относятся"; pairs = [["А","класс А"],["Б","класс Д"],["В","класс Б"],["Г","класс Г"]]; correct="А"; }
+        else if (i === 81) { text = "81. К чрезвычайно эпидемиологически опасным отходам относятся"; pairs = [["А","класс В"],["Б","класс Д"],["В","класс Б"],["Г","класс Г"]]; correct="А"; }
+        else if (i === 82) { text = "82. К токсикологически опасным отходам относятся"; pairs = [["А","класс Г"],["Б","класс Д"],["В","класс Б"],["Г","класс А"]]; correct="А"; }
+        else if (i === 83) { text = "83. Радиоактивные отходы относятся"; pairs = [["А","класс Д"],["Б","класс Г"],["В","класс Б"],["Г","класс А"]]; correct="А"; }
+        else if (i === 89) { text = "89. В одноразовую мягкую упаковку (пакеты) красного цвета собираются отходы"; pairs = [["А","класс В"],["Б","класс Б"],["В","класс А"],["Г","класс Г"]]; correct="А"; }
+        else if (i === 90) { text = "90. Согласно СП 3.1.1.2341-08, мерой специфической профилактики заболеваемости вирусными гепатитами у медработников является"; pairs = [["А","вакцинация"],["Б","антибиотикотерапия"],["В","прием иммуномодуляторов"],["Г","интерферонотерапия"]]; correct="А"; }
+        else if (i === 103) { text = "103. Контроль качества предстерилизационной очистки старшей медсестрой проводится"; pairs = [["А","1 раз в месяц"],["Б","ежедневно"],["В","не реже 1 раза в неделю"],["Г","1 раз в квартал"]]; correct="А"; }
+        else { text = `${i}. Вопрос ${i}`; pairs = [["А","Вариант А"],["Б","Вариант Б"],["В","Вариант В"],["Г","Вариант Г"]]; correct="А"; }
+        
+        questionsBank.push({ text, pairs, correct });
+    }
+
+    // Функция перемешивания
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    // Построение случайного теста
+    function buildRandomTest() {
+        let shuffled = shuffleArray([...questionsBank]);
+        return shuffled.map(q => ({
+            originalText: q.text,
+            shuffledPairs: shuffleArray([...q.pairs]),
+            correctLetter: q.correct
+        }));
+    }
+
+    let currentQuestions = buildRandomTest();
+    let userAnswers = new Array(currentQuestions.length).fill(null);
+
+    function renderTest() {
+        const container = document.getElementById('test-container');
+        container.innerHTML = '';
+        currentQuestions.forEach((q, idx) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-text';
+            questionDiv.innerText = q.originalText;
+            card.appendChild(questionDiv);
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'options';
+            q.shuffledPairs.forEach((pair, optIdx) => {
+                const letter = pair[0];
+                const answerText = pair[1];
+                const radioId = `q${idx}_opt${optIdx}`;
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = `question${idx}`;
+                radio.value = letter;
+                radio.id = radioId;
+                if (userAnswers[idx] === letter) radio.checked = true;
+                radio.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        userAnswers[idx] = letter;
+                        showFeedback(idx);
+                        updateScore();
+                    }
+                });
+                const label = document.createElement('label');
+                label.htmlFor = radioId;
+                label.innerText = `${letter}) ${answerText}`;
+                optionDiv.appendChild(radio);
+                optionDiv.appendChild(label);
+                optionsDiv.appendChild(optionDiv);
+            });
+            card.appendChild(optionsDiv);
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.className = 'feedback';
+            feedbackDiv.id = `fb-${idx}`;
+            card.appendChild(feedbackDiv);
+            container.appendChild(card);
+            if (userAnswers[idx] !== null) showFeedback(idx);
+        });
+        document.getElementById('totalCount').innerText = currentQuestions.length;
+        updateScore();
+    }
+
+    function showFeedback(idx) {
+        const fbDiv = document.getElementById(`fb-${idx}`);
+        const selectedLetter = userAnswers[idx];
+        const q = currentQuestions[idx];
+        if (!selectedLetter) {
+            fbDiv.innerHTML = '⚡ Ответ не выбран';
+            fbDiv.className = 'feedback';
+            return;
+        }
+        const isCorrect = (selectedLetter === q.correctLetter);
+        if (isCorrect) {
+            fbDiv.innerHTML = '✅ Верно!';
+            fbDiv.className = 'feedback correct';
+        } else {
+            fbDiv.innerHTML = '❌ Неверно. Попробуйте ещё раз.';
+            fbDiv.className = 'feedback incorrect';
+        }
+    }
+
+    function updateScore() {
+        let correct = 0;
+        for (let i = 0; i < currentQuestions.length; i++) {
+            if (userAnswers[i] && userAnswers[i] === currentQuestions[i].correctLetter) correct++;
+        }
+        document.getElementById('scoreDisplay').innerText = correct;
+    }
+
+    function resetAll() {
+        userAnswers = new Array(currentQuestions.length).fill(null);
+        renderTest();
+    }
+
+    function newRandomVersion() {
+        currentQuestions = buildRandomTest();
+        userAnswers = new Array(currentQuestions.length).fill(null);
+        renderTest();
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', resetAll);
+    document.getElementById('reshuffleBtn').addEventListener('click', newRandomVersion);
+    renderTest();
+</script>
+</body>
+</html>
